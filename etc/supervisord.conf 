@@ -1,0 +1,9 @@
+[supervisord]
+nodaemon=true
+#user=nobody
+
+#[program:sshd]
+#command=/usr/sbin/sshd -D
+
+[program:httpd]
+command=/bin/bash -c "exec /usr/sbin/httpd -DFOREGROUND"
