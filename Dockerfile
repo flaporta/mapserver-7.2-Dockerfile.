@@ -76,10 +76,10 @@ RUN  yum -y install make \
         make
     
 
-RUN curl  http://download.osgeo.org/mapserver/mapserver-7.2.2.tar.gz | tar xz -C /usr/local/src/ && \
+RUN curl  http://download.osgeo.org/mapserver/mapserver-7.2.2.tar.gz | tar xz -C /usr/local/src/ 
 
 # Compile Mapserver for Apache
- mkdir /usr/local/src/mapserver-7.2.2/build && \
+RUN mkdir /usr/local/src/mapserver-7.2.2/build && \
     cd /usr/local/src/mapserver-7.2.2/build && \ 
      
  cmake ../ -DWITH_THREAD_SAFETY=1 \
@@ -113,19 +113,25 @@ RUN curl  http://download.osgeo.org/mapserver/mapserver-7.2.2.tar.gz | tar xz -C
 
 RUN cp /usr/local/lib/* /usr/lib64/ && \ 
  rm -rf  /usr/local/src/mapserver* && \
-  echo /dev/null > /var/log/httpd/error.log && \
-  echo /dev/null > /var/log/httpd/access.log && \
-  yum clean all && rm -rf /var/cache/yum && \
+  echo /dev/null > /var/log/httpd/error.log &&  \
+  echo /dev/null > /var/log/httpd/access.log 
+RUN yum clean all 
 
- mkdir -p /var/log/supervisor  /var/www/mapserver && \
+# Configure localhost in Apache
+COPY etc/000-default.conf /etc/httpd/conf.d/ 
+
+# Enable these Apache modules
+
+ RUN  mkdir -p /var/log/supervisor  /var/www/mapserver && \
  chown -R apache:apache /var/www && \
  mkdir -p /var/log/supervisor  /var/www/mapserver && \
  chown -R apache:apache /var/www && \
  mkdir -p /var/www/mapserver /var/www/ && \
  echo '<?php phpinfo();' > /var/www/info.php && \
- echo "ServerName localhost" >> /etc/httpd/conf/httpd.conf && \
+ echo "ServerName localhost" >> /etc/httpd/conf/httpd.conf 
 
- chmod o+x /usr/local/bin/mapserv && \
+# Link to cgi-bin executable
+RUN chmod o+x /usr/local/bin/mapserv && \
  mkdir /usr/share/fonts/truetype /usr/lib/cgi-bin  && \
  mv /usr/share/fonts/dejavu /usr/share/fonts/truetype/ttf-dejavu && \
  chmod 755 /usr/lib/cgi-bin && \
@@ -135,8 +141,7 @@ RUN cp /usr/local/lib/* /usr/lib64/ && \
 
 # Apache configuration for PHP-FPM
 #COPY etc/php5-fpm.conf /etc/httpd/conf.d/
-COPY etc/000-default.conf /etc/httpd/conf.d/
-COPY etc/supervisord.conf /etc/supervisord.d/supervisord.ini
+COPY etc/supervisord.ini /etc/supervisord.d/supervisord.ini
 COPY etc/mapscript.ini /etc/php.d/mapscript.ini
 #COPY etc/envvars /etc/httpd/envvars
 
@@ -146,3 +151,4 @@ EXPOSE 80
 ENV HOST_IP `ifconfig | grep inet | grep Mask:255.255.255.0 | cut -d ' ' -f 12 | cut -d ':' -f 2`
 
 CMD ["/usr/bin/supervisord"]
+
